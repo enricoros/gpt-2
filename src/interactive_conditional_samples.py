@@ -53,6 +53,7 @@ def interact_model(
     temperature=1,
     top_k=0,
     models_dir='models',
+    raw_text=None,
 ):
     """
     Interactively run the model
@@ -120,7 +121,8 @@ def interact_model(
         saver.restore(sess, ckpt)
 
         while True:
-            raw_text = input("Model prompt >>> ")
+            if not raw_text:
+                raw_text = input("Model prompt >>> ")
             while not raw_text:
                 print('Prompt should not be empty!')
                 raw_text = input("Model prompt >>> ")
@@ -137,6 +139,7 @@ def interact_model(
             print("got it.. processing")
             start_time = time.time()
             context_tokens = enc.encode(raw_text)
+            raw_text = None
             generated = 0
             for _ in range(nsamples // batch_size):
                 out = sess.run(output, feed_dict={
