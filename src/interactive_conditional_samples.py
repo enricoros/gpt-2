@@ -43,9 +43,6 @@ def make_sp_text(lines, season, episode, skip, count, extra):
             break
     return text
 
-parse_sp_episodes('Season-18.csv')
-parse_sp_episodes('Season-19.csv')
-
 
 def interact_model(
     model_name='124M',
@@ -127,10 +124,13 @@ def interact_model(
             while not raw_text:
                 print('Prompt should not be empty!')
                 raw_text = input("Model prompt >>> ")
+            # if the text entered is "sp", feed a primer conversation from South Park
             if raw_text == "sp":
                 txt_season = 18
                 txt_episode = 1
                 print(" Using South Park season " + str(txt_season) + " ep " + str(txt_episode) + " !!")
+                if txt_season not in SOUTH_LINES:
+                    parse_sp_episodes('Season-' + str(txt_season) + '.csv')
                 raw_text = make_sp_text(SOUTH_LINES, txt_season, txt_episode, 135, 30, "\n")
                 raw_text += "Cartman: "
                 print(raw_text)
@@ -147,7 +147,7 @@ def interact_model(
                     generated += 1
                     text = enc.decode(out[i])
                     print("=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40)
-                    print("Cartman: " + text)
+                    print(text)
             print("=" * 80 + ", Elapsed: " + str(time.time() - start_time))
 
 if __name__ == '__main__':
