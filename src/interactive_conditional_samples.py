@@ -76,17 +76,17 @@ def interact_model(
     """
 
     # Robert Miles - YouTube comments config
-    nsamples = 1
-    length = 150
-    top_k = 40
+    #nsamples = 1
+    #length = 150
+    #top_k = 40
 
     # Enrico's
     # nsamples = 4
     # batch_size = 4
-    nsamples = 2
-    batch_size = 2
-    length = 100
-    top_k = 40
+    #nsamples = 2
+    #batch_size = nsamples
+    #length = 100
+    #top_k = 40
 
 
     models_dir = os.path.expanduser(os.path.expandvars(models_dir))
