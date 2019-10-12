@@ -52,9 +52,9 @@ def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=5
         temperature=temperature, top_k=top_k
     )
 
-    ckpt = tf.train.latest_checkpoint(os.path.join(models_dir, model_name))
+    checkpoint = tf.train.latest_checkpoint(os.path.join(models_dir, model_name))
     saver = tf.compat.v1.train.Saver()
-    saver.restore(sess, ckpt)
+    saver.restore(sess, checkpoint)
     # this function ends after restoring the model - then only the inference part is served via REST
 
 
@@ -65,7 +65,7 @@ def single_step(raw_text, samples):
     output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]})
     # Disabled, to keep the full paragraph and not just the added part
     # output_contexts = completed_context[:, len(initial_context):]
-    output_texts = map(enc.decode, output_contexts)
+    output_texts = list(map(enc.decode, output_contexts))
     print("=" * 36 + " SAMPLE " + str(1) + " " + "=" * 36)
     print(output_texts)
     print("=" * 80 + ", Elapsed: " + str(time.time() - start_time))
@@ -84,6 +84,9 @@ def run_app():
             payload = request.get_json()
             in_text = payload['input']
             in_samples = payload['samples']
+            if in_samples != 1:
+                print('Resetting in_samples to 1, since the context was instantiated with batch 1')
+                in_samples = 1
             output_texts = single_step(in_text, in_samples)
             response = {
                 "input": in_text,
