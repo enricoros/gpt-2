@@ -61,16 +61,15 @@ def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=5
 def single_step(raw_text, samples):
     print("completing '" + raw_text + "'...")
     start_time = time.time()
-    input_tokens = enc.encode(raw_text)
-    out_all = sess.run(output, feed_dict={context: [input_tokens]})
-    print(out_all)
-    out = out_all[:, len(input_tokens):]
-    print(out)
-    text = enc.decode(out[0])
+    initial_context = enc.encode(raw_text)
+    output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]})
+    # Disabled, to keep the full paragraph and not just the added part
+    # output_contexts = completed_context[:, len(initial_context):]
+    output_texts = map(enc.decode, output_contexts)
     print("=" * 36 + " SAMPLE " + str(1) + " " + "=" * 36)
-    print(text)
+    print(output_texts)
     print("=" * 80 + ", Elapsed: " + str(time.time() - start_time))
-    return text
+    return output_texts
 
 
 def run_app():
@@ -81,13 +80,23 @@ def run_app():
     @app.route('/v1/interactive', methods=['POST'])
     def classify():
         try:
+            initial_call_time = time.time()
             payload = request.get_json()
             in_text = payload['input']
             in_samples = payload['samples']
-            out_text = single_step(in_text, in_samples)
-            return out_text, 200
+            output_texts = single_step(in_text, in_samples)
+            response = {
+                "input": in_text,
+                "samples": in_samples,
+                "completions": output_texts,
+                "backend_elapsed": time.time() - initial_call_time
+            }
+            return json.dumps(response), 200
         except Exception as e:
-            return repr(e), 500
+            response = {
+                "backend_exception": repr(e)
+            }
+            return json.dumps(response), 500
 
     app.run(host='127.0.0.1', port=1301)
 
