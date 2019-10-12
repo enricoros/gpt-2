@@ -88,6 +88,11 @@ def run_app():
                 print('Resetting in_samples to 1, since the context was instantiated with batch 1')
                 in_samples = 1
             output_texts = single_step(in_text, in_samples)
+            for i in range(len(output_texts)):
+                text = output_texts[i]
+                text = text.split("<|endoftext|>")[0]
+                text = text.strip()
+                output_texts[i] = text
             response = {
                 "input": in_text,
                 "samples": in_samples,
