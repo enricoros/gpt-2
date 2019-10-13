@@ -78,7 +78,7 @@ def run_app():
     app = Flask(__name__)
 
     @app.route('/v1/interactive', methods=['POST'])
-    def classify():
+    def single():
         try:
             initial_call_time = time.time()
             payload = request.get_json()
@@ -106,6 +106,10 @@ def run_app():
                 "backend_exception": repr(e)
             }
             return json.dumps(response), 500
+
+    @app.route('/v1/control', methods=['POST'])
+    def control():
+        pass
 
     app.run(host='127.0.0.1', port=1301)
 
