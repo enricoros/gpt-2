@@ -72,7 +72,7 @@ def single_step(raw_text, samples):
     return output_texts, output_contexts
 
 
-def run_app():
+def run_app(http_port=1301):
     serve_model()
     single_step('This text is here to speed up the next inference. ', 1)
     app = Flask(__name__)
@@ -111,7 +111,7 @@ def run_app():
     def control():
         pass
 
-    app.run(host='127.0.0.1', port=1301)
+    app.run(host='127.0.0.1', port=http_port)
 
 
 if __name__ == '__main__':
