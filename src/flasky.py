@@ -74,7 +74,7 @@ def single_step(raw_text, samples):
 
 def run_app():
     serve_model()
-    single_step('Warm me up', 1)
+    single_step('This text is here to speed up the next inference. ', 1)
     app = Flask(__name__)
 
     @app.route('/v1/interactive', methods=['POST'])
