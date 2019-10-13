@@ -69,7 +69,7 @@ def single_step(raw_text, samples):
     print("=" * 36 + " SAMPLE " + str(1) + " " + "=" * 36)
     print(output_texts)
     print("=" * 80 + ", Elapsed: " + str(time.time() - start_time))
-    return output_texts
+    return output_texts, output_contexts
 
 
 def run_app():
@@ -87,7 +87,7 @@ def run_app():
             if in_samples != 1:
                 print('Resetting in_samples to 1, since the context was instantiated with batch 1')
                 in_samples = 1
-            output_texts = single_step(in_text, in_samples)
+            output_texts, output_contexts = single_step(in_text, in_samples)
             for i in range(len(output_texts)):
                 text = output_texts[i]
                 text = text.split("<|endoftext|>")[0]
@@ -97,6 +97,7 @@ def run_app():
                 "input": in_text,
                 "samples": in_samples,
                 "completions": output_texts,
+                "contexts": output_contexts,
                 "backend_elapsed": time.time() - initial_call_time
             }
             return json.dumps(response), 200
