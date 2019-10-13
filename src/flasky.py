@@ -97,7 +97,7 @@ def run_app():
                 "input": in_text,
                 "samples": in_samples,
                 "completions": output_texts,
-                "contexts": np.array2string(output_contexts),
+                "contexts": np.array_str(output_contexts),
                 "backend_elapsed": time.time() - initial_call_time
             }
             return json.dumps(response), 200
