@@ -72,10 +72,7 @@ def single_step(raw_text, samples):
     # Disabled, to keep the full paragraph and not just the added part
     # output_contexts = completed_context[:, len(initial_context):]
     output_texts = list(map(enc.decode, output_contexts))
-    print("-" * 36 + " SAMPLE " + str(1) + " " + "-" * 36)
-    print(output_texts)
-    print("=" * 80 + ", Elapsed: " + str(time.time() - start_time))
-    return output_texts, output_contexts
+    return output_texts, output_contexts, time.time() - start_time
 
 
 def run_app(http_port=1301, sample_size=1):
@@ -93,13 +90,16 @@ def run_app(http_port=1301, sample_size=1):
             if in_samples != sample_size:
                 print('Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
                 in_samples = sample_size
-            output_texts, output_contexts = single_step(in_text, in_samples)
+            output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
             for i in range(len(output_texts)):
                 text = output_texts[i]
                 text = text.split("<|endoftext|>")[0]
                 text = text.strip()
                 text = unicodedata.normalize("NFKD", text)
                 output_texts[i] = text
+                print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
+                print(output_texts)
+            print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
             response = {
                 "input": in_text,
                 "samples": in_samples,
