@@ -9,6 +9,8 @@ import fire
 import numpy as np
 import tensorflow as tf
 from flask import Flask, request
+import logging
+from logging.handlers import RotatingFileHandler
 
 import encoder
 import model
@@ -76,12 +78,21 @@ def single_step(raw_text, samples):
 
 
 def run_app(http_port=1301, sample_size=1):
+    # restore the TensorFlow model
     serve_model(nsamples=sample_size, batch_size=sample_size)
+    # run an inference to flush out kernels and speed up the real 1st inference
     single_step('This text is here to speed up the next inference. ', sample_size)
+    # configure Flask for serving
     app = Flask(__name__)
+    # configuring logging of various Flask requests
+    formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
+    handler = RotatingFileHandler("flasky-serving-" + str(http_port) + ".log", maxBytes=10000000, backupCount=5)
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
 
     @app.route('/v1/interactive', methods=['POST'])
     def single():
+        app.logger.info('requesting inference')
         try:
             initial_call_time = time.time()
             payload = request.get_json()
@@ -90,6 +101,7 @@ def run_app(http_port=1301, sample_size=1):
             if in_samples != sample_size:
                 print('Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
                 in_samples = sample_size
+            app.logger.debug('content: ' + in_text)
             output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
             for i in range(len(output_texts)):
                 text = output_texts[i]
