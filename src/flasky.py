@@ -98,7 +98,7 @@ def run_app(http_port=1301, sample_size=1):
                 text = unicodedata.normalize("NFKD", text)
                 output_texts[i] = text
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
-                print(output_texts)
+                print(output_texts[i])
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
             response = {
                 "input": in_text,
