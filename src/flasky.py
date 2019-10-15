@@ -97,6 +97,7 @@ def run_app(http_port=1301, sample_size=1):
                 text = text.strip()
                 text = unicodedata.normalize("NFKD", text)
                 output_texts[i] = text
+                output_contexts[i] = np.array_str(output_contexts[i])
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
@@ -104,7 +105,7 @@ def run_app(http_port=1301, sample_size=1):
                 "input": in_text,
                 "samples": in_samples,
                 "completions": output_texts,
-                "contexts": np.array_str(output_contexts),
+                "contexts": output_contexts,
                 "backend_elapsed": time.time() - initial_call_time
             }
             return json.dumps(response), 200
