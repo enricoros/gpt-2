@@ -2,6 +2,11 @@
 import fire
 import json
 import os
+import time
+import traceback
+import unicodedata
+
+import fire
 import numpy as np
 import tensorflow as tf
 import time
@@ -102,6 +107,8 @@ def run_app(http_port=1301):
             }
             return json.dumps(response), 200
         except Exception as e:
+            print("EXCEPTION on /v1/interactive:")
+            traceback.print_exc()
             response = {
                 "backend_exception": repr(e)
             }
