@@ -65,7 +65,7 @@ def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=5
 
 def single_step(raw_text, samples):
     print("=" * 36 + " REQUEST " + "=" * 37)
-    print("Completing: '" + raw_text + "'")
+    print(" >>: '" + raw_text + "', samples: " + samples)
     start_time = time.time()
     initial_context = enc.encode(raw_text)
     output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]})
