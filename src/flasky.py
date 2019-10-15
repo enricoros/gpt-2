@@ -46,7 +46,7 @@ def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=5
     elif length > hparams.n_ctx:
         raise ValueError("Can't get samples longer than window size: %s" % hparams.n_ctx)
 
-    sess = tf.compat.v1.Session(graph=tf.Graph())
+    sess = tf.kcompat.v1.Session(graph=tf.Graph())
     sess.__enter__()
     context = tf.compat.v1.placeholder(tf.int32, [batch_size, None])
     np.random.seed(seed)
@@ -65,21 +65,22 @@ def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=5
 
 
 def single_step(raw_text, samples):
-    print("completing '" + raw_text + "'...")
+    print("=" * 36 + " REQUEST " + "=" * 37)
+    print("Completing: '" + raw_text + "'")
     start_time = time.time()
     initial_context = enc.encode(raw_text)
     output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]})
     # Disabled, to keep the full paragraph and not just the added part
     # output_contexts = completed_context[:, len(initial_context):]
     output_texts = list(map(enc.decode, output_contexts))
-    print("=" * 36 + " SAMPLE " + str(1) + " " + "=" * 36)
+    print("-" * 36 + " SAMPLE " + str(1) + " " + "-" * 36)
     print(output_texts)
     print("=" * 80 + ", Elapsed: " + str(time.time() - start_time))
     return output_texts, output_contexts
 
 
-def run_app(http_port=1301):
-    serve_model()
+def run_app(http_port=1301, sample_size=1):
+    serve_model(nsamples=sample_size, batch_size=sample_size)
     single_step('This text is here to speed up the next inference. ', 1)
     app = Flask(__name__)
 
@@ -89,10 +90,10 @@ def run_app(http_port=1301):
             initial_call_time = time.time()
             payload = request.get_json()
             in_text = payload['input']
-            in_samples = payload['samples']
-            if in_samples != 1:
-                print('Resetting in_samples to 1, since the context was instantiated with batch 1')
-                in_samples = 1
+            in_samples = getattr(payload, 'samples', sample_size)
+            if in_samples != sample_size:
+                print('Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
+                in_samples = sample_size
             output_texts, output_contexts = single_step(in_text, in_samples)
             for i in range(len(output_texts)):
                 text = output_texts[i]
