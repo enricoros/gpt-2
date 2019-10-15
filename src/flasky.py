@@ -98,6 +98,7 @@ def run_app(http_port=1301):
                 text = output_texts[i]
                 text = text.split("<|endoftext|>")[0]
                 text = text.strip()
+                text = unicodedata.normalize("NFKD", text)
                 output_texts[i] = text
             response = {
                 "input": in_text,
