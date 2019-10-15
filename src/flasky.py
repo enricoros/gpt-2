@@ -111,7 +111,10 @@ def run_app(http_port=1301):
     def control():
         pass
 
-    app.run(host='127.0.0.1', port=http_port)
+    print("HTTP endpoint up and running. POST to /v1/interactive with {'input': 'your text..'}")
+    # USE like:
+    # curl -X POST -H "Content-Type: application/json" -d '{"input":"test"}' http://localhost:1301/v1/interactive
+    app.run(host='127.0.0.1', port=http_port, threaded=False)
 
 
 if __name__ == '__main__':
