@@ -14,7 +14,6 @@ import encoder
 import model
 import sample
 
-
 # disable the TF warning messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -46,7 +45,7 @@ def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=5
     elif length > hparams.n_ctx:
         raise ValueError("Can't get samples longer than window size: %s" % hparams.n_ctx)
 
-    sess = tf.kcompat.v1.Session(graph=tf.Graph())
+    sess = tf.compat.v1.Session(graph=tf.Graph())
     sess.__enter__()
     context = tf.compat.v1.placeholder(tf.int32, [batch_size, None])
     np.random.seed(seed)
