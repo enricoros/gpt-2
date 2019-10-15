@@ -80,7 +80,7 @@ def single_step(raw_text, samples):
 
 def run_app(http_port=1301, sample_size=1):
     serve_model(nsamples=sample_size, batch_size=sample_size)
-    single_step('This text is here to speed up the next inference. ', 1)
+    single_step('This text is here to speed up the next inference. ', sample_size)
     app = Flask(__name__)
 
     @app.route('/v1/interactive', methods=['POST'])
