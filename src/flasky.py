@@ -1,5 +1,4 @@
 ##!/usr/bin/env python3
-import fire
 import json
 import os
 import time
@@ -9,10 +8,12 @@ import unicodedata
 import fire
 import numpy as np
 import tensorflow as tf
-import time
-
-import encoder, model, sample
 from flask import Flask, request
+
+import encoder
+import model
+import sample
+
 
 # disable the TF warning messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
