@@ -89,10 +89,10 @@ def run_app(http_port=1301, sample_size=1):
     handler = RotatingFileHandler("flasky-serving-" + str(http_port) + ".log", maxBytes=10000000, backupCount=5)
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
+    app.logger.setLevel(logging.INFO)
 
     @app.route('/v1/interactive', methods=['POST'])
     def single():
-        app.logger.info('requesting inference')
         try:
             initial_call_time = time.time()
             payload = request.get_json()
@@ -101,7 +101,7 @@ def run_app(http_port=1301, sample_size=1):
             if in_samples != sample_size:
                 print('Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
                 in_samples = sample_size
-            app.logger.debug('content: ' + in_text)
+            app.logger.info('requesting inference: "' + in_text + '"')
             output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
             for i in range(len(output_texts)):
                 text = output_texts[i]
