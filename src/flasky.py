@@ -1,16 +1,17 @@
 ##!/usr/bin/env python3
 import json
+import logging
 import os
 import time
 import traceback
 import unicodedata
+from logging.handlers import RotatingFileHandler
 
 import fire
 import numpy as np
 import tensorflow as tf
 from flask import Flask, request
-import logging
-from logging.handlers import RotatingFileHandler
+from werkzeug.exceptions import BadRequest
 
 import encoder
 import model
@@ -95,7 +96,17 @@ def run_app(http_port=1301, sample_size=1):
     def single():
         try:
             initial_call_time = time.time()
-            payload = request.get_json()
+            try:
+                payload = request.get_json()
+            except BadRequest:
+                # happens if the JSON is malformed, for example
+                raise Exception("body decode error")
+            if payload is None:
+                # happens if the Content-Type is not 'application/json'
+                raise Exception("body format error")
+            if 'input' not in payload:
+                # happens if a critical attribute is missing
+                raise Exception("body content error")
             in_text = payload['input']
             in_samples = getattr(payload, 'samples', sample_size)
             if in_samples != sample_size:
@@ -111,13 +122,13 @@ def run_app(http_port=1301, sample_size=1):
                 output_texts[i] = text
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
-                #output_contexts[i] = np.array_str(output_contexts[i])
+                # output_contexts[i] = np.array_str(output_contexts[i])
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
             response = {
                 "input": in_text,
                 "samples": in_samples,
                 "completions": output_texts,
-                #"contexts": output_contexts,
+                # "contexts": output_contexts,
                 "backend_elapsed": time.time() - initial_call_time
             }
             return json.dumps(response), 200
