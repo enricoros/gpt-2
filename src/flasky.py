@@ -1,4 +1,5 @@
 ##!/usr/bin/env python3
+import datetime
 import json
 import logging
 import os
@@ -11,6 +12,7 @@ import fire
 import numpy as np
 import tensorflow as tf
 from flask import Flask, request
+from flask.logging import default_handler as flask_default_logger
 from werkzeug.exceptions import BadRequest
 
 import encoder
@@ -27,8 +29,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # os.environ['TF_XLA_FLAGS'] = '--tf_xla_cpu_global_jit'
 
 
-def serve_model(model_name='774M', seed=None, nsamples=1, batch_size=1, length=50, temperature=1, top_k=40,
-                models_dir='models', raw_text=None, ):
+def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temperature=1, top_k=40,
+                models_dir='models'):
     global enc
     global sess
     global output
@@ -78,9 +80,9 @@ def single_step(raw_text, samples):
     return output_texts, output_contexts, time.time() - start_time
 
 
-def run_app(http_port=1301, sample_size=1):
+def run_app(http_port=1301, model_name='774M', sample_size=1):
     # restore the TensorFlow model
-    serve_model(nsamples=sample_size, batch_size=sample_size)
+    serve_model(model_name, nsamples=sample_size, batch_size=sample_size)
     # run an inference to flush out kernels and speed up the real 1st inference
     single_step('This text is here to speed up the next inference. ', sample_size)
     # configure Flask for serving
@@ -89,12 +91,15 @@ def run_app(http_port=1301, sample_size=1):
     formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
     handler = RotatingFileHandler("flasky-serving-" + str(http_port) + ".log", maxBytes=10000000, backupCount=5)
     handler.setFormatter(formatter)
+    app.logger.removeHandler(flask_default_logger)
     app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
+    app.logger.warning(' ========== SERVER STARTED ========== : ' + str(datetime.datetime.now()))
 
     @app.route('/v1/interactive', methods=['POST'])
     def single():
         try:
+            # get and validate variable inputs
             initial_call_time = time.time()
             try:
                 payload = request.get_json()
@@ -112,8 +117,12 @@ def run_app(http_port=1301, sample_size=1):
             if in_samples != sample_size:
                 print('Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
                 in_samples = sample_size
-            app.logger.info('requesting inference: "' + in_text + '"')
+
+            # perform inference
+            app.logger.info('requested inference: "' + in_text + '"')
             output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
+
+            # transform to string outputs (and log the request
             output_contexts_str = list(map(str, output_contexts.tolist()))
             for i in range(len(output_texts)):
                 text = output_texts[i]
@@ -123,22 +132,24 @@ def run_app(http_port=1301, sample_size=1):
                 output_texts[i] = text
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
+                app.logger.info('  completion ' + str(i) + ': "' + output_texts[i] + '"')
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
-            response = {
-                "input": in_text,
-                "samples": in_samples,
-                "completions": output_texts,
-                # "contexts": output_contexts_str,
-                "backend_elapsed": time.time() - initial_call_time
-            }
-            return json.dumps(response), 200
+            app.logger.info('  in ' + str(inner_loop_time) + ' seconds')
+
+            # respond to the request
+            return {
+                       "input": in_text,
+                       "samples": in_samples,
+                       "completions": output_texts,
+                       # "contexts": output_contexts_str,
+                       "backend_elapsed": time.time() - initial_call_time
+                   }, 200
         except Exception as e:
             print("EXCEPTION on /v1/interactive:")
             traceback.print_exc()
-            response = {
-                "backend_exception": repr(e)
-            }
-            return json.dumps(response), 500
+            return {
+                       "backend_exception": repr(e)
+                   }, 500
 
     @app.route('/v1/control', methods=['POST'])
     def control():
@@ -146,7 +157,7 @@ def run_app(http_port=1301, sample_size=1):
 
     print("HTTP endpoint up and running. POST to /v1/interactive with {'input': 'your text..'}")
     # USE like:
-    # curl -X POST -H "Content-Type: application/json" -d '{"input":"test"}' http://localhost:1301/v1/interactive
+    # curl -X POST -H "Content-Type: application/json" -d '{"input":"test "}' http://localhost:1301/v1/interactive
     app.run(host='127.0.0.1', port=http_port, threaded=False)
 
 
