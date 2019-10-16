@@ -114,6 +114,7 @@ def run_app(http_port=1301, sample_size=1):
                 in_samples = sample_size
             app.logger.info('requesting inference: "' + in_text + '"')
             output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
+            output_contexts_str = list(map(str, output_contexts.tolist()))
             for i in range(len(output_texts)):
                 text = output_texts[i]
                 text = text.split("<|endoftext|>")[0]
@@ -122,13 +123,12 @@ def run_app(http_port=1301, sample_size=1):
                 output_texts[i] = text
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
-                # output_contexts[i] = np.array_str(output_contexts[i])
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
             response = {
                 "input": in_text,
                 "samples": in_samples,
                 "completions": output_texts,
-                # "contexts": output_contexts,
+                # "contexts": output_contexts_str,
                 "backend_elapsed": time.time() - initial_call_time
             }
             return json.dumps(response), 200
