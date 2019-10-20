@@ -7,6 +7,7 @@ import time
 import traceback
 import unicodedata
 from logging.handlers import RotatingFileHandler
+from threading import Lock
 
 import fire
 import numpy as np
@@ -95,6 +96,7 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
     app.logger.addHandler(handler)
     app.logger.setLevel(logging.INFO)
     app.logger.warning(' ========== SERVER STARTED ========== : ' + str(datetime.datetime.now()))
+    single_tf_lock = Lock()
 
     @app.route('/v1/interactive', methods=['POST'])
     def single():
@@ -119,8 +121,10 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
                 in_samples = sample_size
 
             # perform inference
+            single_tf_lock.acquire()
             app.logger.info('requested inference: "' + in_text + '"')
             output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
+            single_tf_lock.release()
 
             # transform to string outputs (and log the request
             output_contexts_str = list(map(str, output_contexts.tolist()))
@@ -157,12 +161,12 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
 
     @app.route('/v1/control', methods=['POST'])
     def control():
-        pass
+        return {"alive": True}, 200
 
     print("HTTP endpoint up and running. POST to /v1/interactive with {'input': 'your text..'}")
     # USE like:
     # curl -X POST -H "Content-Type: application/json" -d '{"input":"test "}' http://localhost:1301/v1/interactive
-    app.run(host='127.0.0.1', port=http_port, threaded=False)
+    app.run(host='127.0.0.1', port=http_port, threaded=True)
 
 
 if __name__ == '__main__':
