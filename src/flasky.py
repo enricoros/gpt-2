@@ -121,12 +121,13 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
                 in_samples = sample_size
 
             # perform inference
+            app.logger.info('request: "' + in_text + '", length: ' + str(length) + ', samples: ' + str(in_samples))
             single_tf_lock.acquire()
-            app.logger.info('requested inference: "' + in_text + '"')
             output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
             single_tf_lock.release()
+            app.logger.info('  in ' + str(inner_loop_time) + ' seconds')
 
-            # transform to string outputs (and log the request
+            # transform to string outputs
             output_contexts_str = list(map(str, output_contexts.tolist()))
             for i in range(len(output_texts)):
                 text = output_texts[i]
@@ -134,15 +135,12 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
                 text = text.strip()
                 text = unicodedata.normalize("NFKD", text)
                 output_texts[i] = text
+
+            # log to console
+            for i in range(len(output_texts)):
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
-                try:
-                    app.logger.info('  completion ' + str(i) + ': "' + output_texts[i] + '"')
-                except UnicodeEncodeError:
-                    # ignore the error, generated from a purely decorative statement
-                    traceback.print_exc()
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
-            app.logger.info('  in ' + str(inner_loop_time) + ' seconds')
 
             # respond to the request
             return {
