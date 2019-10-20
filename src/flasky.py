@@ -132,7 +132,11 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
                 output_texts[i] = text
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
-                app.logger.info('  completion ' + str(i) + ': "' + output_texts[i] + '"')
+                try:
+                    app.logger.info('  completion ' + str(i) + ': "' + output_texts[i] + '"')
+                except UnicodeEncodeError:
+                    # ignore the error, generated from a purely decorative statement
+                    traceback.print_exc()
             print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
             app.logger.info('  in ' + str(inner_loop_time) + ' seconds')
 
