@@ -73,12 +73,18 @@ def single_step(raw_text, samples):
     print("=" * 36 + " REQUEST " + "=" * 37)
     print(" >>: '" + raw_text + "', samples: " + str(samples))
     start_time = time.time()
+    # Encode input
     initial_context = enc.encode(raw_text)
+    encode_time = time.time()
+    # Perform completions
     output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]})
-    # Disabled, to keep the full paragraph and not just the added part
-    # output_contexts = completed_context[:, len(initial_context):]
+    inference_time = time.time()
+    # Remove encoded input fom all outputs, since it's preserved in the response anyway
+    output_contexts = output_contexts[:, len(initial_context):]
+    # Decode the output context back to text
     output_texts = list(map(enc.decode, output_contexts))
-    return output_texts, output_contexts, time.time() - start_time
+    decode_time = time.time()
+    return output_texts, output_contexts, inference_time - encode_time
 
 
 def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_size=1, length=80):
@@ -123,32 +129,26 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
             # perform inference
             app.logger.info('request: "' + in_text + '", length: ' + str(length) + ', samples: ' + str(in_samples))
             single_tf_lock.acquire()
-            output_texts, output_contexts, inner_loop_time = single_step(in_text, in_samples)
+            output_texts, output_contexts, inner_inference_time = single_step(in_text, in_samples)
             single_tf_lock.release()
-            app.logger.info('  in ' + str(inner_loop_time) + ' seconds')
+            app.logger.info('  in ' + str(inner_inference_time) + ' seconds')
 
-            # transform to string outputs
-            output_contexts_str = list(map(str, output_contexts.tolist()))
-            for i in range(len(output_texts)):
-                text = output_texts[i]
-                text = text.split("<|endoftext|>")[0]
-                text = text.strip()
-                text = unicodedata.normalize("NFKD", text)
-                output_texts[i] = text
+            # cleanup completions
+            output_texts = list(map(lambda x: unicodedata.normalize("NFKD", x.split("<|endoftext|>")[0]), output_texts))
 
             # log to console
             for i in range(len(output_texts)):
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 print(output_texts[i])
-            print("=" * 80 + ", Elapsed: " + str(inner_loop_time))
+            print("=" * 80 + ", Elapsed: " + str(inner_inference_time))
 
             # respond to the request
             return {
                        "input": in_text,
                        "samples": in_samples,
                        "completions": output_texts,
-                       # "contexts": output_contexts_str,
-                       "backend_elapsed": time.time() - initial_call_time
+                       "backend_elapsed": time.time() - initial_call_time,
+                       "backend_elapsed_inference": inner_inference_time,
                    }, 200
         except Exception as e:
             print("EXCEPTION on /v1/interactive:")
