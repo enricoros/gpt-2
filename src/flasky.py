@@ -81,7 +81,7 @@ def single_step(raw_text, samples):
     return output_texts, output_contexts, time.time() - start_time
 
 
-def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
+def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_size=1, length=80):
     # restore the TensorFlow model
     serve_model(model_name, nsamples=sample_size, batch_size=sample_size, length=length)
     # run an inference to flush out kernels and speed up the real 1st inference
@@ -164,7 +164,7 @@ def run_app(http_port=1301, model_name='774M', sample_size=1, length=50):
     print("HTTP endpoint up and running. POST to /v1/interactive with {'input': 'your text..'}")
     # USE like:
     # curl -X POST -H "Content-Type: application/json" -d '{"input":"test "}' http://localhost:1301/v1/interactive
-    app.run(host='127.0.0.1', port=http_port, threaded=True)
+    app.run(host=http_host, port=http_port, threaded=True)
 
 
 if __name__ == '__main__':
