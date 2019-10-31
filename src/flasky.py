@@ -115,9 +115,9 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                 # happens if a critical attribute is missing
                 raise Exception("body content error")
             in_text = payload['input']
-            in_samples = getattr(payload, 'samples', sample_size)
+            in_samples = payload.get('samples', sample_size)
             if in_samples != sample_size:
-                print('Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
+                print('WARNING: Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
                 in_samples = sample_size
 
             # perform inference
