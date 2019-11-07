@@ -96,7 +96,7 @@ def single_step(raw_text, samples):
     # Decode the output context back to text
     output_texts = list(map(enc.decode, output_contexts))
     decode_time = time.time()
-    return output_texts, output_contexts, inference_time - encode_time
+    return output_texts, output_contexts, inference_time - encode_time, encode_time - start_time
 
 
 def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_size=1, length=50):
@@ -141,7 +141,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
             # perform inference
             app.logger.info('request: "' + in_text + '", length: ' + str(length) + ', samples: ' + str(in_samples))
             single_tf_lock.acquire()
-            output_texts, output_contexts, inner_inference_time = single_step(in_text, in_samples)
+            output_texts, output_contexts, inner_inference_time, encoding_time = single_step(in_text, in_samples)
             single_tf_lock.release()
             app.logger.info('  in ' + str(inner_inference_time) + ' seconds')
 
@@ -161,6 +161,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                        "completions": output_texts,
                        "backend_elapsed": time.time() - initial_call_time,
                        "backend_elapsed_inference": inner_inference_time,
+                       "backend_elapsed_encoding": encoding_time,
                    }, 200
         except Exception as e:
             print("EXCEPTION on /v1/interactive:")
