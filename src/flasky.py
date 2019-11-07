@@ -1,4 +1,4 @@
-##!/usr/bin/env python3
+#!/usr/bin/env python3
 import datetime
 import json
 import logging
@@ -30,7 +30,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # os.environ['TF_XLA_FLAGS'] = '--tf_xla_cpu_global_jit'
 
 # was: length = None, top_k = 0,
-def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temperature=1, top_k=40, top_p = 1,
+def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temperature=1, top_k=40, top_p=1,
                 models_dir='models'):
     global enc
     global sess
