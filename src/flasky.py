@@ -20,6 +20,11 @@ import encoder
 import model
 import sample
 
+# Local constant to enable Execution tracing
+PROFILE_ON = False
+if PROFILE_ON is True:
+    from tensorflow.python.client import timeline
+
 # disable the TF warning messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -77,8 +82,15 @@ def single_step(raw_text, samples):
     initial_context = enc.encode(raw_text)
     encode_time = time.time()
     # Perform completions
-    output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]})
+    run_options = tf.compat.v1.RunOptions(trace_level=tf.RunOptions.HARDWARE_TRACE) if PROFILE_ON else None
+    run_metadata = tf.compat.v1.RunMetadata() if PROFILE_ON else None
+    output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]},
+                               options=run_options, run_metadata=run_metadata)
     inference_time = time.time()
+    # If profiling the execution, save the timeline to file in chrome-tracing format
+    if run_metadata is not None:
+        with open('timeline.json', 'w') as f:
+            f.write(timeline.Timeline(run_metadata.step_stats).generate_chrome_trace_format())
     # Remove encoded input fom all outputs, since it's preserved in the response anyway
     output_contexts = output_contexts[:, len(initial_context):]
     # Decode the output context back to text
