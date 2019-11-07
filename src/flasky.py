@@ -35,7 +35,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # os.environ['TF_XLA_FLAGS'] = '--tf_xla_cpu_global_jit'
 
 # was: length = None, top_k = 0,
-def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temperature=1, top_k=40, top_p=1,
+def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temperature=1, top_k=40,
                 models_dir='models'):
     global enc
     global sess
@@ -65,7 +65,7 @@ def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temp
         hparams=hparams, length=length,
         context=context,
         batch_size=batch_size,
-        temperature=temperature, top_k=top_k, top_p=top_p
+        temperature=temperature, top_k=top_k
     )
 
     checkpoint = tf.train.latest_checkpoint(os.path.join(models_dir, model_name))
