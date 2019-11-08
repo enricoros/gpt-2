@@ -11,7 +11,7 @@ import model, sample, encoder
 # disable the TF warning messages
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 # disable the TF deprecation messages
-tf._deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
+# tf._deprecation_wrapper._PER_MODULE_WARNING_LIMIT = 0
 # enable XLA - doesn't give performance advantage
 # os.environ['TF_XLA_FLAGS'] = '--tf_xla_cpu_global_jit'
 
