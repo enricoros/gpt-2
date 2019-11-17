@@ -152,8 +152,8 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
             for i in range(len(output_texts)):
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 try:
-                    print(output_texts[i])
-                except Exception as e: # ignoring exception from format conversion - apparently it assumes CP1252. should we set it to utf-8, somewhere?
+                    print(output_texts[i])  # this can cause an exception because the CP1252 format is assumed
+                except Exception as fe:  # ignoring exceptions from format conversion
                     pass
             print("=" * 80 + ", Elapsed: " + str(inner_inference_time))
 
@@ -169,9 +169,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
         except Exception as e:
             print("EXCEPTION on /v1/interactive:")
             traceback.print_exc()
-            return {
-                       "backend_exception": repr(e)
-                   }, 500
+            return {"backend_exception": repr(e)}, 500
 
     @app.route('/v1/control', methods=['POST'])
     def control():
