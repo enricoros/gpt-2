@@ -100,7 +100,7 @@ def single_step(raw_text, samples):
     return output_texts, output_contexts, inference_time - encode_time, encode_time - start_time
 
 
-def restrict_to_gpu_number(phy_number):
+def set_gpu_number(phy_number):
     gpu_list = tf.config.experimental.list_physical_devices('GPU')
     try:
         tf.config.experimental.set_visible_devices(gpu_list[phy_number], 'GPU')
@@ -110,14 +110,35 @@ def restrict_to_gpu_number(phy_number):
         print("Incorrect 0-based Physical GPU index. There are " + str(len(gpu_list)) + " GPUs, starting from 0.")
         sys.exit()
     except RuntimeError as e:
-        print(" Visible devices must be set before GPUs have been initialized")
+        print("Visible devices must be set before GPUs have been initialized")
         sys.exit()
 
 
-def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', gpu_phy=None, sample_size=1, length=50):
+def set_gpu_memory(size_mb=None):
+    gpu_list = tf.config.experimental.list_physical_devices('GPU')
+    try:
+        for gpu in gpu_list:
+            if size_mb is None:
+                pass
+            elif size_mb is 0:
+                tf.config.experimental.set_memory_growth(gpu, True)
+                print("Set GPU " + gpu.name + " to Incremental memory allocation")
+            else:
+                tf.config.experimental.set_virtual_device_configuration(
+                    gpu,
+                    [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=size_mb)])
+                print("Set GPU " + gpu.name + " to " + str(size_mb) + "MB max memory")
+    except RuntimeError as e:
+        print("Memory growth must be set before GPUs have been initialized")
+
+
+def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_size=1, length=50,
+            gpu_phy=None, gpu_mem=None):
     # handle GPU selection and memory allocation
     if gpu_phy is not None:
-        restrict_to_gpu_number(gpu_phy)
+        set_gpu_number(gpu_phy)
+    if gpu_mem is not None:
+        set_gpu_memory(gpu_mem)
     # restore the TensorFlow model
     serve_model(model_name, nsamples=sample_size, batch_size=sample_size, length=length)
     # run an inference to flush out kernels and speed up the real 1st inference
