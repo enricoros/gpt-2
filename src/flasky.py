@@ -151,7 +151,10 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
             # log to console
             for i in range(len(output_texts)):
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
-                print(output_texts[i])
+                try:
+                    print(output_texts[i])
+                except Exception as e: # ignoring exception from format conversion - apparently it assumes CP1252. should we set it to utf-8, somewhere?
+                    pass
             print("=" * 80 + ", Elapsed: " + str(inner_inference_time))
 
             # respond to the request
