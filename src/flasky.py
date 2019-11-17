@@ -3,6 +3,7 @@ import datetime
 import json
 import logging
 import os
+import sys
 import time
 import traceback
 import unicodedata
@@ -99,7 +100,24 @@ def single_step(raw_text, samples):
     return output_texts, output_contexts, inference_time - encode_time, encode_time - start_time
 
 
-def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_size=1, length=50):
+def restrict_to_gpu_number(phy_number):
+    gpu_list = tf.config.experimental.list_physical_devices('GPU')
+    try:
+        tf.config.experimental.set_visible_devices(gpu_list[phy_number], 'GPU')
+        logical_gpu_list = tf.config.experimental.list_logical_devices('GPU')
+        print("GPU selection:", len(gpu_list), "Physical GPUs,", len(logical_gpu_list), "Logical GPU")
+    except IndexError as e:
+        print("Incorrect 0-based Physical GPU index. There are " + str(len(gpu_list)) + " GPUs, starting from 0.")
+        sys.exit()
+    except RuntimeError as e:
+        print(" Visible devices must be set before GPUs have been initialized")
+        sys.exit()
+
+
+def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', gpu_phy=None, sample_size=1, length=50):
+    # handle GPU selection and memory allocation
+    if gpu_phy is not None:
+        restrict_to_gpu_number(gpu_phy)
     # restore the TensorFlow model
     serve_model(model_name, nsamples=sample_size, batch_size=sample_size, length=length)
     # run an inference to flush out kernels and speed up the real 1st inference
