@@ -1,4 +1,5 @@
-flask
+tensorflow==1.15.0
+flask>=1.1.1
 fire>=0.1.3
 regex==2017.4.5
 requests==2.21.0
