@@ -85,7 +85,8 @@ def single_step(raw_text, samples):
     # Perform completions
     run_options = tf.compat.v1.RunOptions(trace_level=tf.RunOptions.HARDWARE_TRACE) if PROFILE_ON else None
     run_metadata = tf.compat.v1.RunMetadata() if PROFILE_ON else None
-    output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]},
+    output_contexts = sess.run(output,
+                               feed_dict={context: [initial_context for _ in range(samples)]},
                                options=run_options, run_metadata=run_metadata)
     inference_time = time.time()
     # If profiling the execution, save the timeline to file in chrome-tracing format
@@ -176,6 +177,8 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                 # happens if a critical attribute is missing
                 raise Exception("body content error")
             in_text = payload['input']
+            if not in_text:
+                in_text = '<|endoftext|>\n'  # blank input translates to a context with only an end symbol
             in_samples = payload.get('samples', sample_size)
             if in_samples != sample_size:
                 print('WARNING: Resetting in_samples to ' + str(sample_size) + ', to match session constraints')
