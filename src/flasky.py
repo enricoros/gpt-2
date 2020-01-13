@@ -85,14 +85,8 @@ def single_step(raw_text, samples):
     # Perform completions
     run_options = tf.compat.v1.RunOptions(trace_level=tf.RunOptions.HARDWARE_TRACE) if PROFILE_ON else None
     run_metadata = tf.compat.v1.RunMetadata() if PROFILE_ON else None
-    try:
-        output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]},
-                                   options=run_options, run_metadata=run_metadata)
-    except Exception as re:
-        # TODO: decide how to handle this
-        # tensorflow.python.framework.errors_impl.ResourceExhaustedError: raised when can't allocate memory
-        # for this inference
-        print(re)
+    output_contexts = sess.run(output, feed_dict={context: [initial_context for _ in range(samples)]},
+                               options=run_options, run_metadata=run_metadata)
     inference_time = time.time()
     # If profiling the execution, save the timeline to file in chrome-tracing format
     if run_metadata is not None:
@@ -139,12 +133,16 @@ def set_gpu_memory(size_mb=None):
 
 
 def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_size=1, length=50,
-            gpu_phy=None, gpu_mem=None):
+            gpu_off=None, gpu_phy=None, gpu_mem=None):
     # handle GPU selection and memory allocation
-    if gpu_phy is not None:
-        set_gpu_number(gpu_phy)
-    if gpu_mem is not None:
-        set_gpu_memory(gpu_mem)
+    if gpu_off is True:
+        print("Disabling GPU support (forcing CPU)")
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    else:
+        if gpu_phy is not None:
+            set_gpu_number(gpu_phy)
+        if gpu_mem is not None:
+            set_gpu_memory(gpu_mem)
     # restore the TensorFlow model
     serve_model(model_name, nsamples=sample_size, batch_size=sample_size, length=length)
     # run an inference to flush out kernels and speed up the real 1st inference
