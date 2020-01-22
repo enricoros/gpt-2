@@ -76,8 +76,9 @@ def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temp
 
 
 def single_step(raw_text, samples):
+    print()
     print("=" * 36 + " REQUEST " + "=" * 37)
-    print(" >>: '" + raw_text + "', samples: " + str(samples))
+    print(" >> (x" + str(samples) + ") '" + raw_text + "'")
     start_time = time.time()
     # Encode input
     initial_context = enc.encode(raw_text)
@@ -87,8 +88,8 @@ def single_step(raw_text, samples):
     run_metadata = tf.compat.v1.RunMetadata() if PROFILE_ON else None
     try:
         output_contexts = sess.run(output,
-                               feed_dict={context: [initial_context for _ in range(samples)]},
-                               options=run_options, run_metadata=run_metadata)
+                                   feed_dict={context: [initial_context for _ in range(samples)]},
+                                   options=run_options, run_metadata=run_metadata)
     except:
         print("Flasky: Exception: likely resource exhaustion. Killing the process.")
         os.kill(os.getpid(), 9)
@@ -206,7 +207,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                     print(output_texts[i])  # this can cause an exception because the CP1252 format is assumed
                 except Exception as fe:  # ignoring exceptions from format conversion
                     pass
-            print("=" * 80 + ", Elapsed: " + str(inner_inference_time))
+            print("=" * 80 + " (" + str(round(inner_inference_time, 2)) + ")")
 
             # respond to the request
             return {
@@ -215,7 +216,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                        "completions": output_texts,
                        "backend_elapsed": time.time() - initial_call_time,
                        "backend_elapsed_inference": inner_inference_time,
-                       #"backend_elapsed_encoding": encoding_time,
+                       # "backend_elapsed_encoding": encoding_time,
                    }, 200
         except Exception as e:
             print("EXCEPTION on /v1/interactive:")
