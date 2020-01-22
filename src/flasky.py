@@ -215,7 +215,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                        "completions": output_texts,
                        "backend_elapsed": time.time() - initial_call_time,
                        "backend_elapsed_inference": inner_inference_time,
-                       "backend_elapsed_encoding": encoding_time,
+                       #"backend_elapsed_encoding": encoding_time,
                    }, 200
         except Exception as e:
             print("EXCEPTION on /v1/interactive:")
