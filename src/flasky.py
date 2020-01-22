@@ -85,9 +85,14 @@ def single_step(raw_text, samples):
     # Perform completions
     run_options = tf.compat.v1.RunOptions(trace_level=tf.RunOptions.HARDWARE_TRACE) if PROFILE_ON else None
     run_metadata = tf.compat.v1.RunMetadata() if PROFILE_ON else None
-    output_contexts = sess.run(output,
+    try:
+        output_contexts = sess.run(output,
                                feed_dict={context: [initial_context for _ in range(samples)]},
                                options=run_options, run_metadata=run_metadata)
+    except:
+        print("Flasky: Exception: likely resource exhaustion. Killing the process.")
+        os.kill(os.getpid(), 9)
+        # goodbye
     inference_time = time.time()
     # If profiling the execution, save the timeline to file in chrome-tracing format
     if run_metadata is not None:
