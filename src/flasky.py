@@ -207,7 +207,7 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                     print(output_texts[i])  # this can cause an exception because the CP1252 format is assumed
                 except Exception as fe:  # ignoring exceptions from format conversion
                     pass
-            print("=" * 80 + " (" + str(round(inner_inference_time, 2)) + ")")
+            print("=" * 80 + " (" + str(round(inner_inference_time, 3)) + ")")
 
             # respond to the request
             return {
