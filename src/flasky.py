@@ -146,6 +146,8 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
         print("Disabling GPU support (forcing CPU)")
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     else:
+        if gpu_mem is not None:
+            set_gpu_memory(gpu_mem)
         if gpu_phy is not None:
             set_gpu_number(gpu_phy)
         if gpu_mem is not None:
