@@ -76,9 +76,6 @@ def serve_model(model_name, seed=None, nsamples=1, batch_size=1, length=50, temp
 
 
 def single_step(raw_text, samples):
-    print()
-    print("=" * 36 + " REQUEST " + "=" * 37)
-    print(" >> (x" + str(samples) + ") '" + raw_text + "'")
     start_time = time.time()
     # Encode input
     initial_context = enc.encode(raw_text)
@@ -150,8 +147,6 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
             set_gpu_memory(gpu_mem)
         if gpu_phy is not None:
             set_gpu_number(gpu_phy)
-        if gpu_mem is not None:
-            set_gpu_memory(gpu_mem)
     # restore the TensorFlow model
     serve_model(model_name, nsamples=sample_size, batch_size=sample_size, length=length)
     # run an inference to flush out kernels and speed up the real 1st inference
@@ -193,16 +188,19 @@ def run_app(http_host='127.0.0.1', http_port=1301, model_name='774M', sample_siz
                 in_samples = sample_size
 
             # perform inference
-            app.logger.info('request: "' + in_text + '", length: ' + str(length) + ', samples: ' + str(in_samples))
+            # app.logger.info('request: "' + in_text + '", length: ' + str(length) + ', samples: ' + str(in_samples))
             single_tf_lock.acquire()
             output_texts, output_contexts, inner_inference_time, encoding_time = single_step(in_text, in_samples)
             single_tf_lock.release()
-            app.logger.info('  in ' + str(inner_inference_time) + ' seconds')
+            # app.logger.info('  in ' + str(inner_inference_time) + ' seconds')
 
             # cleanup completions
             output_texts = list(map(lambda x: unicodedata.normalize("NFKD", x.split("<|endoftext|>")[0]), output_texts))
 
-            # log to console
+            # log to console the request and response
+            print()
+            print("=" * 36 + " REQUEST " + "=" * 37)
+            print(" >> (x" + str(in_samples) + ") '" + in_text + "'")
             for i in range(len(output_texts)):
                 print("-" * 36 + " SAMPLE " + str(i) + " " + "-" * 36)
                 try:
